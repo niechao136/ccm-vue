@@ -3,7 +3,7 @@ import { createPinia, PiniaVuePlugin } from 'pinia'
 import VueCompositionApi from '@vue/composition-api'
 import 'virtual:svg-icons-register'
 // @ts-ignore
-import { Scrollbar, Menu, MenuItem, Dropdown, DropdownItem, DropdownMenu } from 'element-ui'
+import { Scrollbar, Menu, MenuItem, Submenu, Dropdown, DropdownItem, DropdownMenu } from 'element-ui'
 import i18n from '@/locales'
 import router from '@/router'
 import App from '@/App.vue'
@@ -14,6 +14,7 @@ setDomFontSize()
 
 Vue.use(Scrollbar)
 Vue.use(Menu)
+Vue.use(Submenu)
 Vue.use(MenuItem)
 Vue.use(Dropdown)
 Vue.use(DropdownMenu)
