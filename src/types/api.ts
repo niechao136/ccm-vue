@@ -1,5 +1,7 @@
 import { User } from './user'
 import { Role } from './role'
+import { Account } from './account'
+import { Branch } from './branch'
 
 export interface Response {
   status?: number
@@ -23,6 +25,14 @@ export interface UserInfoResponse extends Response {
 
 export interface RoleInfoResponse extends Response {
   role?: Role
+}
+
+export interface AccListResponse extends Response {
+  accs?: Array<Account>
+}
+
+export interface BranchListResponse extends Response {
+  branchs?: Array<Branch>
 }
 
 export interface TokenInfo {

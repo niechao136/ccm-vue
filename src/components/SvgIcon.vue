@@ -1,4 +1,4 @@
-<script lang="ts">
+<!--<script lang="ts">
   import { defineComponent, computed } from '@vue/composition-api'
 
   export default defineComponent({
@@ -14,10 +14,10 @@
       }
     }
   })
-</script>
+</script>-->
 
-<template>
-  <svg class="svg-icon" aria-hidden="true">
-    <use :xlink:href="iconName"></use>
+<template functional>
+  <svg aria-hidden="true" :class="[data.class, data.staticClass, 'svg-icon']">
+    <use :xlink:href="`#icon-${props.name}`"></use>
   </svg>
 </template>

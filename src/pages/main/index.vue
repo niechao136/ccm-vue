@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { defineComponent, ref, onMounted, computed } from '@vue/composition-api'
+  import { defineComponent, ref, reactive, onMounted, computed } from '@vue/composition-api'
   import { SvgIcon } from '@/components'
-  import { useAppStore } from '@/stores'
+  import { useAppStore, useAccountStore, useBranchStore } from '@/stores'
   import { scrollbarWidth } from '@/utils'
+  import { Account } from '@/types'
 
   export default defineComponent({
     components: {
@@ -28,8 +29,12 @@
       const appStore = useAppStore()
       const fullname = ref(appStore.owner.name)
       const acc_id = ref(appStore.owner.acc_id)
+      const accStore = useAccountStore()
+      const accs = reactive<Array<Account>>([])
       onMounted(async () => {
         const { getOwner, getRole, checkCookie } = useAppStore()
+        const { getAccounts } = useAccountStore()
+        const { getBranchs } = useBranchStore()
         if (!appStore.token.token) {
           checkCookie()
         }
@@ -41,6 +46,9 @@
         if (!appStore.role.auth_info) {
           await getRole()
         }
+        await getAccounts()
+        await getBranchs()
+        Object.values(accStore.accounts).forEach((acc, key) => accs[key] = acc)
       })
       const gutter = scrollbarWidth()
       const showStyle = `min-height: calc(600px - 8.64583rem + ${gutter}px);height: calc(100vh - 8.64583rem + ${gutter}px);width:calc(15.625rem + ${gutter}px);`
@@ -49,6 +57,7 @@
       return {
         fullname,
         acc_id,
+        accs,
         collapse,
         sideStyle,
         menu,
@@ -64,7 +73,9 @@
   <div class="main-page">
     <div class="page-header">
       <div class="page-logo">
-        <svg-icon class="menu-switch" :name="menu" @click.native="collapse = !collapse"></svg-icon>
+        <button class="switch-btn" @click="collapse = !collapse">
+          <svg-icon class="menu-switch" :name="menu"></svg-icon>
+        </button>
         <svg-icon class="home-logo" name="logo"></svg-icon>
       </div>
       <div class="page-top">
@@ -85,10 +96,15 @@
       <div class="page-side">
         <div class="brand-area" v-show="!collapse">
           <div class="brand-id">品牌ID : {{ acc_id }}</div>
-          <div class="brand-select"></div>
+          <div class="brand-select">
+            <el-select v-model="acc_id" popper-class="brand-dropdowm">
+              <el-option v-for="(item, key) in accs" :key="key" :value="item.id" :label="item.name"></el-option>
+            </el-select>
+            <svg-icon class="select-arrow" name="arrow_down"></svg-icon>
+          </div>
         </div>
         <div class="border-bottom"></div>
-        <el-scrollbar class="page-menu" :wrapStyle="sideStyle" :class="{'is-collapse': collapse}"
+        <el-scrollbar :wrapStyle="sideStyle" :class="[{'is-collapse': collapse}, 'page-menu']"
                       wrap-class="full-menu" view-class="view-menu">
           <el-menu :router="false" ref="side" class="side-menu"
                    :collapse="collapse" @select="menuSelect" :default-active="page" :collapse-transition="false">
@@ -150,7 +166,9 @@
         </el-scrollbar>
       </div>
       <div class="page-content">
-        <router-view :name="page"></router-view>
+        <keep-alive>
+          <router-view :name="page"></router-view>
+        </keep-alive>
       </div>
     </div>
   </div>
@@ -177,10 +195,18 @@
         justify-content: center;
         align-items: center;
 
+        .switch-btn {
+          width: 28px;
+          height: 26px;
+          border: none;
+          background-color: transparent;
+          margin-right: 20px;
+          padding: 0;
+        }
+
         .menu-switch {
           width: 28px;
           height: 26px;
-          margin-right: 20px;
           cursor: pointer;
         }
 
@@ -254,8 +280,37 @@
           }
 
           .brand-select {
-            margin-left: 50px;
+            margin-left: 45px;
             height: 36px;
+            display: flex;
+            align-items: center;
+
+            .el-select {
+              width: 220px;
+
+              ::v-deep {
+                .el-input__inner {
+                  height: 36px;
+                  width: 220px;
+                  padding: 0 15px 0 5px;
+                  background-color: #1E2234;
+                  color: #fff;
+                  border: none;
+                  font-size: 24px;
+                }
+
+                .el-input__suffix {
+                  display: none;
+                }
+              }
+            }
+
+            .select-arrow {
+              height: 7px;
+              width: 14px;
+              -webkit-transform: rotateZ(-90deg);
+              transform: rotateZ(-90deg);
+            }
           }
         }
 
@@ -368,6 +423,104 @@
           }
         }
       }
+    }
+  }
+</style>
+
+<style lang="scss">
+  .menu-settings {
+    width: 300px;
+
+    .el-menu--popup {
+      background-color: #1E2234;
+
+      .el-submenu__title, .el-menu-item {
+        padding: 0 50px !important;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, .05);
+
+        .dot-icon {
+          height: 8px;
+          width: 8px;
+          background-color: #fff;
+          margin-right: 30px;
+          border-radius: 50%;
+        }
+
+        .title {
+          color: #fff;
+          height: 70px;
+          line-height: 70px;
+          font-size: 16px;
+        }
+
+        .menu-arrow {
+          height: 7px;
+          width: 14px;
+          position: absolute;
+          right: 50px;
+          transition: transform .3s,-webkit-transform .3s;
+          -webkit-transform: rotateZ(-90deg);
+          transform: rotateZ(-90deg);
+        }
+
+        .el-submenu__icon-arrow {
+          display: none;
+        }
+
+        &:hover, &:focus {
+          background-color: #F54A84;
+        }
+
+        &.is-active {
+          background-color: #F31D65;
+        }
+      }
+
+      .el-submenu.is-opened {
+        > .el-submenu__title {
+          /*background-color: #F54A84;*/
+
+          .menu-arrow {
+            -webkit-transform: rotateZ(90deg);
+            transform: rotateZ(90deg);
+          }
+        }
+      }
+
+      .el-submenu.is-active {
+        > .el-submenu__title {
+          background-color: #F31D65;
+        }
+      }
+    }
+
+    .menu-alerts {
+      width: 300px;
+    }
+  }
+
+  .brand-dropdowm {
+    background-color: #1E2234;
+    border: none;
+
+    .el-select-dropdown__item {
+      color: #fff;
+      height: 48px;
+      font-size: 16px;
+      line-height: 48px;
+
+      &.hover, &.selected {
+        background-color: #362f49 !important;
+        color: #f31d65;
+        font-weight: 400;
+      }
+    }
+
+    .popper__arrow {
+      display: none;
     }
   }
 </style>

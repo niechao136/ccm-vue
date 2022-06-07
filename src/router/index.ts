@@ -38,12 +38,9 @@ const router = new VueRouter({
   routes,
 })
 
-//router.beforeEach((to, _, next) => {
-//  if (to.path === '/main') {
-//    const { checkCookie } = useAppStore()
-//    checkCookie()
-//  }
-//  next()
-//})
+router.beforeEach((to, _, next) => {
+  document.title = to.meta?.title ?? '冷鏈管理'
+  next()
+})
 
 export default router
