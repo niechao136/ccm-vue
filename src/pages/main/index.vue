@@ -2,68 +2,116 @@
   import { defineComponent, ref, reactive, onMounted, computed } from '@vue/composition-api'
   import { SvgIcon } from '@/components'
   import { useAppStore, useAccountStore, useBranchStore } from '@/stores'
-  import { scrollbarWidth } from '@/utils'
+  import { useScroll, useCookie } from '@/hooks'
   import { Account } from '@/types'
 
+  // 主页面 layout 部分，包括品牌切换、侧边栏、回到首页和登出、底部版号信息
   export default defineComponent({
     components: {
       SvgIcon
     },
     setup() {
-      const page = ref('overview')
-      const collapse = ref(false)
-      const menu = computed(() => collapse.value ? 'menu_close' : 'menu_open')
-      const menuSelect = (index: string) => page.value = index
-      const pages = [
-        'overview',
-        'temp',
-        'sensor',
-        'abnormal',
-        'report',
-        'freezer_setting',
-        'sensor_setting',
-        'alert_setting',
-        'temp_alert',
-        'elec_alert'
-      ]
       const appStore = useAppStore()
+
+      // head 部分
+      /** 登录用户的用户名 */
       const fullname = ref(appStore.owner.name)
+      /** menu 切换按钮图标 */
+      const menu = computed(() => collapse.value ? 'menu_close' : 'menu_open')
+      /**
+       * 用户 dropdown 选择事件
+       * @param command homepage - 回到首页 logout - 登出
+       */
+      const handleCommand = (command: string) => {
+        switch (command) {
+          case 'homepage':
+            window.location.href = import.meta.env.VITE_HOMEPAGE + '/homepage'
+            break;
+          case 'logout':
+            const { clearToken } = useCookie()
+            clearToken()
+            window.location.href = import.meta.env.VITE_HOMEPAGE
+            break;
+        }
+      }
+
+      // side 部分
+      /** menu 选中的子页面 */
+      const page = ref('overview')
+      /** menu 是否展开 */
+      const collapse = ref(false)
+      /**
+       * menu 选择事件
+       * @param index
+       */
+      const menuSelect = (index: string) => page.value = index
+      /** 当前品牌 ID */
       const acc_id = ref(appStore.owner.acc_id)
-      const accStore = useAccountStore()
+      /** 可供切换的品牌列表 */
       const accs = reactive<Array<Account>>([])
+      /** 数据是否获取完成 */
+      const loading = ref(true)
+
+      // 滚动条样式
+      const { buildStyle } = useScroll()
+      /** 侧边栏展开时，side 位置滚动条的样式 */
+      const showSide = buildStyle({ min: true, top: 166, width: 300 })
+      /** 侧边栏收起时，side 位置滚动条的样式 */
+      const hideSide = buildStyle({ min: true, top: 80, width: 105 })
+      /** side 位置滚动条的样式 */
+      const sideStyle = computed(() => collapse.value ? hideSide : showSide)
+      /** 侧边栏展开时，content 位置滚动条的样式 */
+      const showMain = buildStyle({ min: true, top: 70, width: 1620 })
+      /** 侧边栏收起时，content 位置滚动条的样式 */
+      const hideMain = buildStyle({ min: true, top: 70, width: 1815 })
+      /** content 位置滚动条的样式 */
+      const mainStyle = computed(() => collapse.value ? hideMain : showMain)
+
+      // foot 部分
+      /** 配置的版本号 */
+      const version = import.meta.env.VITE_VERSION
+
+      // 获取数据
       onMounted(async () => {
         const { getOwner, getRole, checkCookie } = useAppStore()
+        const accStore = useAccountStore()
         const { getAccounts } = useAccountStore()
         const { getBranchs } = useBranchStore()
+        // store 中是否存有 token, 没有则从 Cookie 中解析
         if (!appStore.token.token) {
           checkCookie()
         }
+        // store 中是否存有用户信息, 没有则重新获取
         if (!appStore.owner.role_id) {
           await getOwner()
           fullname.value = appStore.owner.name
           acc_id.value = appStore.owner.acc_id
         }
+        // store 中是否存有权限信息, 没有则重新获取
         if (!appStore.role.auth_info) {
           await getRole()
         }
+        // 获取品牌列表
         await getAccounts()
+        // 获取门店列表
         await getBranchs()
         Object.values(accStore.accounts).forEach((acc, key) => accs[key] = acc)
+        loading.value = false
       })
-      const gutter = scrollbarWidth()
-      const showStyle = `min-height: calc(600px - 8.64583rem + ${gutter}px);height: calc(100vh - 8.64583rem + ${gutter}px);width:calc(15.625rem + ${gutter}px);`
-      const hideStyle = `min-height: calc(600px - 8.64583rem + ${gutter}px);height: calc(100vh - 4.166667rem + ${gutter}px);width:calc(5.46875rem + ${gutter}px);`
-      const sideStyle = computed(() => collapse.value ? hideStyle : showStyle)
+
       return {
         fullname,
         acc_id,
         accs,
+        loading,
         collapse,
         sideStyle,
+        mainStyle,
         menu,
         menuSelect,
-        page,
-        pages
+        handleCommand,
+        version,
+        page
       }
     }
   })
@@ -80,27 +128,27 @@
       </div>
       <div class="page-top">
         <div class="page-title">Cold Chain Management</div>
-        <el-dropdown class="user-info" trigger="click">
+        <el-dropdown class="user-info" trigger="click" @command="handleCommand">
           <div class="toggle-btn">
             <div class="user-name">{{ fullname }}</div>
             <svg-icon class="arrow" name="arrow_down_black"></svg-icon>
           </div>
-          <el-dropdown-menu slot="dropdown" :visibleArrow="false">
-            <el-dropdown-item>回到首頁</el-dropdown-item>
-            <el-dropdown-item>登出系統</el-dropdown-item>
+          <el-dropdown-menu class="user-dropdown" slot="dropdown" :visibleArrow="false">
+            <el-dropdown-item command="homepage">回到首頁</el-dropdown-item>
+            <el-dropdown-item command="logout">登出系統</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
     </div>
-    <div class="page-main">
+    <div :class="['page-main', {'is-collapse': collapse}]">
       <div class="page-side">
         <div class="brand-area" v-show="!collapse">
           <div class="brand-id">品牌ID : {{ acc_id }}</div>
           <div class="brand-select">
-            <el-select v-model="acc_id" popper-class="brand-dropdowm">
+            <el-select v-if="!loading" v-model="acc_id" popper-class="brand-dropdowm">
               <el-option v-for="(item, key) in accs" :key="key" :value="item.id" :label="item.name"></el-option>
             </el-select>
-            <svg-icon class="select-arrow" name="arrow_down"></svg-icon>
+            <svg-icon v-if="!loading" class="select-arrow" name="arrow_down"></svg-icon>
           </div>
         </div>
         <div class="border-bottom"></div>
@@ -166,9 +214,17 @@
         </el-scrollbar>
       </div>
       <div class="page-content">
-        <keep-alive>
-          <router-view :name="page"></router-view>
-        </keep-alive>
+        <el-scrollbar :wrapStyle="mainStyle" :class="[{'is-collapse': collapse}, 'content-main']"
+                      wrap-class="full-content" view-class="view-content">
+          <div class="main-content">
+            <keep-alive>
+              <router-view :name="page"></router-view>
+            </keep-alive>
+          </div>
+          <div class="main-footer">
+            {{version}} © 2021 Advantech Intelligent City Services Co., Ltd. (AiCS) All Rights Reserved.
+          </div>
+        </el-scrollbar>
       </div>
     </div>
   </div>
@@ -423,6 +479,27 @@
           }
         }
       }
+
+      .page-content {
+        ::v-deep .view-content {
+          display: flex;
+          flex-direction: column;
+          min-height: 100%;
+          justify-content: space-between;
+
+          .main-content {
+            /*height: 2000px;*/
+          }
+
+          .main-footer {
+            padding: 20px 30px;
+            color: #4B5262;
+            font-size: 14px;
+            line-height: 20px;
+            height: 20px;
+          }
+        }
+      }
     }
   }
 </style>
@@ -521,6 +598,15 @@
 
     .popper__arrow {
       display: none;
+    }
+  }
+
+  .user-dropdown {
+    .el-dropdown-menu__item {
+      &:hover, &:focus {
+        background-color: #fee8f0;
+        color: #f54a84;
+      }
     }
   }
 </style>

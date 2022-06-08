@@ -4,11 +4,11 @@
   import { StoreVueToken } from '@/types'
   import { useAppStore } from '@/stores'
 
+  // 登录页面，主要功能为：解析 URL、设置多语言、登录、获取用户和权限信息
   export default defineComponent({
     async setup() {
       /**
-       * 对 URL 中的参数解码校验
-       * @param query
+       * 对 URL 中的参数进行解码校验
        */
       const checkURL = (query: string | (string | null)[] | undefined) =>
         typeof query === 'string' ? decodeURIComponent(query) : ''
@@ -30,7 +30,7 @@
           if (appStore.owner.role_id) {
             await getRole() // 获取登录用户权限信息
             if (appStore.role.auth_info) {
-              router?.push('main')
+              router?.push('main') // 跳转到 main 页面
             }
           }
         }

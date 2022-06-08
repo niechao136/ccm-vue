@@ -1,12 +1,12 @@
 <script lang="ts">
   import { defineComponent } from '@vue/composition-api'
-  import { scrollbarWidth } from '@/utils'
+  import { useScroll } from '@/hooks'
 
   export default defineComponent({
     setup() {
-      const gutter = scrollbarWidth()
-      const wrapStyle = `height: calc(100vh + ${gutter}px);width:calc(100% + ${gutter}px);`
-      /*console.log(wrapStyle)*/
+      const { buildStyle } = useScroll()
+      const wrapStyle = buildStyle()
+      //console.log(wrapStyle)
       return {
         wrapStyle
       }
@@ -15,7 +15,8 @@
 </script>
 
 <template>
-  <el-scrollbar class="screen-scrollbar" :wrapStyle="wrapStyle" wrap-class="full-screen" view-class="view-box">
+  <el-scrollbar class="screen-scrollbar" :wrapStyle="wrapStyle"
+                wrap-class="full-screen" view-class="view-box">
     <router-view></router-view>
   </el-scrollbar>
 </template>

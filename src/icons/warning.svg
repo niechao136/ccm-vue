@@ -1,0 +1,7 @@
+<svg id="溫度異常" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <path id="Path_491" data-name="Path 491" d="M24,0A24,24,0,1,1,0,24,24,24,0,0,1,24,0Z" fill="#f31d65"/>
+  <g id="Group_1396" data-name="Group 1396" transform="translate(21 10.5)">
+    <rect id="Rectangle_729" data-name="Rectangle 729" width="5" height="20" rx="2.5" transform="translate(0.5)" fill="#fff"/>
+    <circle id="Ellipse_5" data-name="Ellipse 5" cx="2.5" cy="2.5" r="2.5" transform="translate(0.5 24)" fill="#fff"/>
+  </g>
+</svg>
