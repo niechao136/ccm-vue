@@ -13,11 +13,13 @@
     setup() {
       const appStore = useAppStore()
 
-      // head 部分
+      //#region head 部分
       /** 登录用户的用户名 */
       const fullname = ref(appStore.owner.name)
       /** menu 切换按钮图标 */
       const menu = computed(() => collapse.value ? 'menu_close' : 'menu_open')
+      /** homepage 地址 */
+      const homepage = import.meta.env.VITE_HOMEPAGE + '/homepage'
       /**
        * 用户 dropdown 选择事件
        * @param command homepage - 回到首页 logout - 登出
@@ -25,7 +27,7 @@
       const handleCommand = (command: string) => {
         switch (command) {
           case 'homepage':
-            window.location.href = import.meta.env.VITE_HOMEPAGE + '/homepage'
+            window.location.href = homepage
             break;
           case 'logout':
             const { clearToken } = useCookie()
@@ -34,8 +36,9 @@
             break;
         }
       }
+      //#endregion
 
-      // side 部分
+      //#region side 部分
       /** menu 选中的子页面 */
       const page = ref('overview')
       /** menu 是否展开 */
@@ -48,11 +51,12 @@
       /** 当前品牌 ID */
       const acc_id = ref(appStore.owner.acc_id)
       /** 可供切换的品牌列表 */
-      const accs = reactive<Array<Account>>([])
+      const acc_list = reactive<Array<Account>>([])
       /** 数据是否获取完成 */
       const loading = ref(true)
+      //#endregion
 
-      // 滚动条样式
+      //#region 滚动条样式
       const { buildStyle } = useScroll()
       /** 侧边栏展开时，side 位置滚动条的样式 */
       const showSide = buildStyle({ min: true, top: 166, width: 300 })
@@ -66,17 +70,19 @@
       const hideMain = buildStyle({ min: true, top: 70, width: 1815 })
       /** content 位置滚动条的样式 */
       const mainStyle = computed(() => collapse.value ? hideMain : showMain)
+      //#endregion
 
-      // foot 部分
+      //#region foot 部分
       /** 配置的版本号 */
       const version = import.meta.env.VITE_VERSION
+      //#endregion
 
-      // 获取数据
+      //#region 获取数据
       onMounted(async () => {
         const { getOwner, getRole, checkCookie } = useAppStore()
         const accStore = useAccountStore()
         const { getAccounts } = useAccountStore()
-        const { getBranchs } = useBranchStore()
+        const { getBranches } = useBranchStore()
         // store 中是否存有 token, 没有则从 Cookie 中解析
         if (!appStore.token.token) {
           checkCookie()
@@ -94,24 +100,37 @@
         // 获取品牌列表
         await getAccounts()
         // 获取门店列表
-        await getBranchs()
-        Object.values(accStore.accounts).forEach((acc, key) => accs[key] = acc)
+        await getBranches()
+        Object.values(accStore.accounts).forEach((acc, key) => acc_list[key] = acc)
         loading.value = false
       })
+      //#endregion
 
       return {
+        //#region head 部分
         fullname,
+        menu,
+        homepage,
+        handleCommand,
+        //#endregion
+
+        //#region side 部分
+        page,
         acc_id,
-        accs,
+        acc_list,
         loading,
         collapse,
+        menuSelect,
+        //#endregion
+
+        //#region 滚动条样式
         sideStyle,
         mainStyle,
-        menu,
-        menuSelect,
-        handleCommand,
-        version,
-        page
+        //#endregion
+
+        //#region foot 部分
+        version
+        //#endregion
       }
     }
   })
@@ -119,12 +138,15 @@
 
 <template>
   <div class="main-page">
+    <!-- region header -->
     <div class="page-header">
       <div class="page-logo">
         <button class="switch-btn" @click="collapse = !collapse">
           <svg-icon class="menu-switch" :name="menu"></svg-icon>
         </button>
-        <svg-icon class="home-logo" name="logo"></svg-icon>
+        <a class="home-link" :href="homepage">
+          <svg-icon class="home-logo" name="logo"></svg-icon>
+        </a>
       </div>
       <div class="page-top">
         <div class="page-title">Cold Chain Management</div>
@@ -140,13 +162,15 @@
         </el-dropdown>
       </div>
     </div>
+    <!-- endregion -->
     <div :class="['page-main', {'is-collapse': collapse}]">
+      <!-- region header -->
       <div class="page-side">
         <div class="brand-area" v-show="!collapse">
           <div class="brand-id">品牌ID : {{ acc_id }}</div>
           <div class="brand-select">
             <el-select v-if="!loading" v-model="acc_id" popper-class="brand-dropdowm">
-              <el-option v-for="(item, key) in accs" :key="key" :value="item.id" :label="item.name"></el-option>
+              <el-option v-for="(item, key) in acc_list" :key="key" :value="item.id" :label="item.name"></el-option>
             </el-select>
             <svg-icon v-if="!loading" class="select-arrow" name="arrow_down"></svg-icon>
           </div>
@@ -213,6 +237,8 @@
           </el-menu>
         </el-scrollbar>
       </div>
+      <!-- endregion -->
+      <!-- region content -->
       <div class="page-content">
         <el-scrollbar :wrapStyle="mainStyle" :class="[{'is-collapse': collapse}, 'content-main']"
                       wrap-class="full-content" view-class="view-content">
@@ -226,6 +252,7 @@
           </div>
         </el-scrollbar>
       </div>
+      <!-- endregion -->
     </div>
   </div>
 </template>
@@ -242,7 +269,7 @@
       width: 100%;
       height: 70px;
       display: flex;
-      box-shadow: 0px 4px 4px -4px #b9b9b9bf;
+      box-shadow: 0 4px 4px -4px #b9b9b9bf;
 
       .page-logo {
         width: 300px;

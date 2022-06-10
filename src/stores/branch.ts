@@ -5,20 +5,20 @@ import { Branch, BranchListResponse } from '@/types'
 import { post } from '@/api'
 
 export const useBranchStore = defineStore('branch', () => {
-  const branchs = reactive<Record<string, Branch>>({})
+  const branches = reactive<Record<string, Branch>>({})
 
   const appStore = useAppStore()
 
-  const getBranchs = async () => {
+  const getBranches = async () => {
     const res: BranchListResponse = await post('/api/ccm/branch/list', {
       token: appStore.token.token,
       user_id: appStore.token.user_id
     })
-    res.branchs?.forEach(branch => branchs[branch.branch_id ?? ''] = branch)
+    res.branchs?.forEach(branch => branches[branch.branch_id ?? ''] = branch)
   }
 
   return {
-    branchs,
-    getBranchs
+    branches,
+    getBranches
   }
 })

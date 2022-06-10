@@ -5,7 +5,6 @@ import {
   CCMToken, User, Role, StoreVueToken,
   LoginResponse, UserInfoResponse, RoleInfoResponse
 } from '@/types'
-import { copyObject } from '@/utils'
 import { post } from '@/api'
 
 
@@ -36,7 +35,7 @@ export const useAppStore = defineStore('app', () => {
       user_id: token.user_id
     })
     if (res.status === 1) {
-      copyObject(owner, res.user)
+      Object.assign<User, User>(owner, res.user ?? {})
     }
   }
 
@@ -46,7 +45,7 @@ export const useAppStore = defineStore('app', () => {
       token: token.token
     })
     if (res.status === 1) {
-      copyObject(role, res.role)
+      Object.assign<Role, Role>(role, res.role ?? {})
     }
   }
 
@@ -54,7 +53,7 @@ export const useAppStore = defineStore('app', () => {
     const cookie = getToken()
     if (cookie !== '') {
       const ccm_token: CCMToken = JSON.parse(aesDecrypt(cookie))
-      copyObject(token, ccm_token)
+      Object.assign<CCMToken, CCMToken>(token, ccm_token)
       //token.key = ccm_token.token?.key
       //token.token_id = ccm_token.token?.token_id
     }

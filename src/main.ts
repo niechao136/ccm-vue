@@ -2,7 +2,6 @@ import Vue from 'vue'
 import { createPinia, PiniaVuePlugin } from 'pinia'
 import VueCompositionApi from '@vue/composition-api'
 import 'virtual:svg-icons-register'
-
 import {
   // @ts-ignore
   Scrollbar,
@@ -14,7 +13,7 @@ import i18n from '@/locales'
 import router from '@/router'
 import App from '@/App.vue'
 import { setDomFontSize } from '@/utils'
-import 'element-ui/lib/theme-chalk/index.css'
+import '@/assets/theme/index.css'
 import '@/styles/index.scss'
 
 setDomFontSize()
